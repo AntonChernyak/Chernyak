@@ -2,15 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="latest"
+        android:id="@+id/action_latest"
         android:title="@string/latest" />
 
     <item
-        android:id="hot"
+        android:id="@+id/action_hot"
         android:title="@string/hot" />
 
     <item
-        android:id="top"
+        android:id="@+id/action_top"
         android:title="@string/top" />
 
 </menu>

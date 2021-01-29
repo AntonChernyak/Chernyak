@@ -1,6 +1,8 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
+    id 'kotlin-android-extensions'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -30,6 +32,10 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    packagingOptions{
+        exclude 'META-INF/rxjava.properties'
+    }
 }
 
 dependencies {
@@ -39,7 +45,47 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    testImplementation 'junit:junit:4.+'
+    testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    // Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava:2.4.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.jakewharton.retrofit:retrofit2-rxjava2-adapter:1.0.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'
+
+    // Room
+    def room_version = "2.2.6"
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    // optional - Kotlin Extensions and Coroutines support for Room
+    implementation "androidx.room:room-ktx:$room_version"
+    // optional - Test helpers
+    testImplementation "androidx.room:room-testing:$room_version"
+
+    // Glide
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
+
+    // Lifecycle
+    def lifecycle_version = "1.1.1"
+    // ViewModel and LiveData
+    implementation "android.arch.lifecycle:extensions:$lifecycle_version"
+    // alternatively - just ViewModel
+    implementation "android.arch.lifecycle:viewmodel:$lifecycle_version" // For Kotlin use viewmodel-ktx
+    // alternatively - just LiveData
+    implementation "android.arch.lifecycle:livedata:$lifecycle_version"
+    // alternatively - Lifecycles only (no ViewModel or LiveData).
+    //     Support library depends on this lightweight import
+    implementation "android.arch.lifecycle:runtime:$lifecycle_version"
+    annotationProcessor "android.arch.lifecycle:compiler:$lifecycle_version" // For Kotlin use kapt instead of annotationProcessor
+    // alternately - if using Java8, use the following instead of compiler
+    implementation "android.arch.lifecycle:common-java8:$lifecycle_version"
+    // optional - ReactiveStreams support for LiveData
+    implementation "android.arch.lifecycle:reactivestreams:$lifecycle_version"
+    // optional - Test helpers for LiveData
+    testImplementation "android.arch.core:core-testing:$lifecycle_version"
+
 }

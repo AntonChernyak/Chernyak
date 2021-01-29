@@ -3,4 +3,9 @@
     <string name="latest">Последние</string>
     <string name="hot">Горячие</string>
     <string name="top">Лучшие</string>
+    <string name="network_error">Проверьте подключение к сети</string>
+    <string name="gif_animation">Гиф анимация</string>
+    <string name="next_button">Кнопка вперёд</string>
+    <string name="previous_button">Кнопка назад</string>
+    <string name="error">\"Ошибка: \"</string>
 </resources>

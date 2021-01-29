@@ -23,6 +23,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
+        android:contentDescription="@string/gif_animation"
         app:layout_constraintBottom_toTopOf="@+id/imageButtonNext"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -34,6 +35,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:contentDescription="@string/next_button"
+        android:onClick="onClickPreviousButton"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/imageButtonNext"
         app:layout_constraintHorizontal_bias="0.5"
@@ -46,10 +49,25 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:contentDescription="@string/previous_button"
+        android:onClick="onClickNextButton"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/imageButtonPrevious"
         app:srcCompat="@drawable/ic_baseline_arrow_forward_24" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="@dimen/loading_progressBar_dimen"
+        android:layout_height="@dimen/loading_progressBar_dimen"
+        android:indeterminate="true"
+        android:indeterminateTintMode="src_atop"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/imageViewGif"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imageViewGif" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
