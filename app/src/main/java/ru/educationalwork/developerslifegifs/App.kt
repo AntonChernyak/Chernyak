@@ -7,6 +7,8 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import ru.educationalwork.developerslifegifs.api.ApiService
+import ru.educationalwork.developerslifegifs.database.Db
+import java.util.concurrent.Executors
 
 class App : Application() {
     lateinit var apiService: ApiService
@@ -15,15 +17,16 @@ class App : Application() {
         super.onCreate()
         instance = this
         initRetrofit()
+        initDb()
     }
 
     private fun initRetrofit() {
         // Подключаем интерцептор для логгирования
-        val logging = HttpLoggingInterceptor()
-        logging.level = HttpLoggingInterceptor.Level.HEADERS
+/*        val logging = HttpLoggingInterceptor()
+        logging.level = HttpLoggingInterceptor.Level.HEADERS*/
 
         val okHttpClient = OkHttpClient.Builder()
-            .addInterceptor(logging)
+            //.addInterceptor(logging)
             .build()
 
         // инициализация Retrofit
@@ -39,8 +42,14 @@ class App : Application() {
 
     }
 
+    private fun initDb(){
+        Executors.newSingleThreadScheduledExecutor().execute {
+            Db.getInstance(this)
+        }
+    }
     companion object {
         const val BASE_URL = "https://developerslife.ru/"
+        const val DATABASE_NAME = "gif-db.db"
 
         var instance: App? = null
             private set
