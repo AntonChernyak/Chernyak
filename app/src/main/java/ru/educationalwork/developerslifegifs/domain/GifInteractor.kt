@@ -4,6 +4,9 @@ import android.util.Log
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import ru.educationalwork.developerslifegifs.presentation.view.MainActivity.Companion.ACTION_CHANGE_CATEGORY
+import ru.educationalwork.developerslifegifs.presentation.view.MainActivity.Companion.ACTION_NEXT
+import ru.educationalwork.developerslifegifs.presentation.view.MainActivity.Companion.ACTION_PREVIOUS
 import ru.educationalwork.developerslifegifs.presentation.view.MainActivity.Companion.CATEGORY_RANDOM
 import ru.educationalwork.developerslifegifs.repository.database.GifRepositoryInterface
 import ru.educationalwork.developerslifegifs.repository.model.ApiResponse
@@ -11,24 +14,40 @@ import ru.educationalwork.developerslifegifs.repository.model.DbGifItem
 import ru.educationalwork.developerslifegifs.repository.model.GifItemResponse
 import ru.educationalwork.developerslifegifs.repository.service.ApiService
 import java.util.concurrent.Executors
+import kotlin.math.abs
 
 class GifInteractor(
     private val apiService: ApiService,
     private val repository: GifRepositoryInterface
 ) {
 
-    fun getGifFromNet(category: String, page: String, itemCounter: Int, netCallback: GetGifNetCallback) {
-        netCallback.isLoading(true)
-      //  Log.d("TAGGGG", "$category, $page, $itemCounter")
-        if (category == CATEGORY_RANDOM) {
-            getRandomPostFromNet(netCallback)
-        } else getSpecialPostFromNet(category, page, itemCounter, netCallback)
+    private var pageCounter: Int = 0
+    private var itemCounter: Int = 0
+    private var backStackCounter: Int = 0
+
+    fun getGif(category: String, action: String, saveCounter: Int, callback: GetGifCallback){
+        Log.d("TAGGG", "action = $action, cat = $category, counter = $backStackCounter")
+        if ((action == ACTION_NEXT && backStackCounter == 0)) {
+            getGifFromNet(category, callback)
+            callback.isLast(false)
+        } else if (action == ACTION_CHANGE_CATEGORY){
+            getGifFromNet(category, callback)
+            backStackCounter = 0
+        }
+        else getGifFromDb(action, callback)
     }
 
-    private fun getRandomPostFromNet(netCallback: GetGifNetCallback){
+    private fun getGifFromNet(category: String, callback: GetGifCallback) {
+        callback.isLoading(true)
+        if (category == CATEGORY_RANDOM) {
+            getRandomPostFromNet(callback)
+        } else getSpecialPostFromNet(category, callback)
+    }
+
+    private fun getRandomPostFromNet(callback: GetGifCallback){
         apiService.getRandomPost().enqueue(object : Callback<GifItemResponse>{
             override fun onFailure(call: Call<GifItemResponse>, t: Throwable) {
-                netCallback.onError(t.message.toString())
+                callback.onError("Проверьте подключение к сети")
             }
 
             override fun onResponse(
@@ -40,18 +59,18 @@ class GifInteractor(
                     Executors.newSingleThreadExecutor().execute {
                         repository.addGifToDb(dbGif)
                     }
-                    netCallback.onSuccess(dbGif)
+                    callback.onSuccess(dbGif)
                 } else {
-                    netCallback.onError(response.code().toString())
+                    callback.onError(response.code().toString())
                 }
             }
         })
     }
 
-    private fun getSpecialPostFromNet(category: String, page: String, itemCounter: Int, netCallback: GetGifNetCallback) {
-        apiService.getSpecialPosts(category, page).enqueue(object : Callback<ApiResponse>{
+    private fun getSpecialPostFromNet(category: String, callback: GetGifCallback) {
+        apiService.getSpecialPosts(category, pageCounter.toString()).enqueue(object : Callback<ApiResponse>{
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                netCallback.onError(t.message.toString())
+                callback.onError("Проверьте подключение к сети")
             }
 
             override fun onResponse(
@@ -59,41 +78,53 @@ class GifInteractor(
                 response: Response<ApiResponse>
             ) {
                 if (response.isSuccessful  && response.body() != null ) {
-                    val gif = response.body()?.items?.get(itemCounter)
-                    val dbGif = DbGifItem(description = gif!!.description, url = gif.gifURL)
-                    Executors.newSingleThreadExecutor().execute {
-                        repository.addGifToDb(dbGif)
+                   val gifList  = response.body()?.items
+                   if (gifList?.size == 0) callback.onError("Нет данных")
+                   else {
+                        val gif = gifList?.get(itemCounter)
+                        val dbGif = DbGifItem(description = gif!!.description, url = gif.gifURL)
+                        Executors.newSingleThreadExecutor().execute {
+                            repository.addGifToDb(dbGif)
+                        }
+                        itemCounter++
+                        if (itemCounter == gifList.size) {
+                            pageCounter++
+                            itemCounter = 0
+                        }
+                        callback.onSuccess(dbGif)
                     }
-                    netCallback.onSuccess(dbGif)
                 } else {
-                    netCallback.onError(response.code().toString())
+                    callback.onError(response.code().toString())
                 }
             }
 
         })
     }
 
-    fun getGifFromDb(dbCounter: Int, dbCallback: GetGifDbCallback){
-        dbCallback.isLoading(true)
+    private fun getGifFromDb(action: String, callback: GetGifCallback){
+        callback.isLoading(true)
         Executors.newSingleThreadExecutor().execute {
             val gifList = repository.getAllGifs()
-            if (gifList.size == dbCounter) dbCallback.isLast(true)
-            else {
-                Log.d("TAGGG", "${gifList[gifList.size - 1 - dbCounter]}")
-                dbCallback.onSuccess(gifList[gifList.size - 1 - dbCounter])
-            }
+            if (gifList.size - backStackCounter > 0) {
+                if (action == ACTION_NEXT) backStackCounter--
+                else if (action == ACTION_PREVIOUS) backStackCounter++
+                callback.backStackCounter(backStackCounter)
+
+                if (abs(gifList.size - backStackCounter) == 1) callback.isLast(true)
+                else callback.isLast(false)
+
+                Log.d("TAGGGG", "Previous: counter = $backStackCounter, size = ${gifList.size}")
+                callback.onSuccess(gifList[gifList.size - 1 - backStackCounter])
+            } else callback.onError("Нет данных")
         }
     }
 
-    interface GetGifNetCallback {
+    interface GetGifCallback {
         fun isLoading(load: Boolean)
         fun onSuccess(gif: DbGifItem?)
         fun onError(error: String)
+        fun isLast(isLast: Boolean)
+        fun backStackCounter(counter: Int)
     }
 
-    interface GetGifDbCallback{
-        fun isLoading(load: Boolean)
-        fun onSuccess(gif: DbGifItem?)
-        fun isLast(isLast: Boolean)
-    }
 }

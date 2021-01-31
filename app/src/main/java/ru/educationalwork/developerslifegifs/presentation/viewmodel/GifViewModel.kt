@@ -12,6 +12,7 @@ class GifViewModel : ViewModel() {
     private val errorLiveData = MutableLiveData<String>()
     private val isLoadingLiveData = MutableLiveData<Boolean>()
     private val isLastLiveData = MutableLiveData<Boolean>()
+    private val backStackCounterLiveData = MutableLiveData<Int>()
 
     private val gifInteractor = App.instance?.gifInteractor
 
@@ -27,8 +28,12 @@ class GifViewModel : ViewModel() {
     val isLast: LiveData<Boolean>
         get() = isLastLiveData
 
-    fun getGifFromNet(category: String, page: String = "0", itemCounter: Int = 0){
-        gifInteractor?.getGifFromNet(category, page, itemCounter, object : GifInteractor.GetGifNetCallback{
+    val backStackCounter: LiveData<Int>
+        get() = backStackCounterLiveData
+
+
+    fun getGif(category: String, action: String, saveCounter: Int){
+        gifInteractor?.getGif(category, action, saveCounter, object : GifInteractor.GetGifCallback{
             override fun isLoading(load: Boolean) {
                 isLoadingLiveData.postValue(load)
             }
@@ -40,24 +45,14 @@ class GifViewModel : ViewModel() {
             override fun onError(error: String) {
                 errorLiveData.postValue(error)
             }
-        })
-    }
-
-    fun getGifFromDb(dbCounter: Int){
-        gifInteractor?.getGifFromDb(dbCounter, object : GifInteractor.GetGifDbCallback{
-            override fun isLoading(load: Boolean) {
-                isLoadingLiveData.postValue(load)
-            }
-
-            override fun onSuccess(gif: DbGifItem?) {
-                gifLiveData.postValue(gif)
-            }
 
             override fun isLast(isLast: Boolean) {
                 isLastLiveData.postValue(isLast)
             }
 
-
+            override fun backStackCounter(counter: Int) {
+                backStackCounterLiveData.postValue(counter)
+            }
         })
     }
 
