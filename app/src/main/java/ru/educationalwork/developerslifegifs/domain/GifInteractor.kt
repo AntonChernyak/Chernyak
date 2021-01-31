@@ -1,13 +1,15 @@
 package ru.educationalwork.developerslifegifs.domain
 
+import android.util.Log
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import ru.educationalwork.developerslifegifs.presentation.view.MainActivity.Companion.CATEGORY_RANDOM
 import ru.educationalwork.developerslifegifs.repository.database.GifRepositoryInterface
+import ru.educationalwork.developerslifegifs.repository.model.ApiResponse
 import ru.educationalwork.developerslifegifs.repository.model.DbGifItem
 import ru.educationalwork.developerslifegifs.repository.model.GifItemResponse
-import ru.educationalwork.developerslifegifs.repository.server.ApiService
+import ru.educationalwork.developerslifegifs.repository.service.ApiService
 import java.util.concurrent.Executors
 
 class GifInteractor(
@@ -15,66 +17,83 @@ class GifInteractor(
     private val repository: GifRepositoryInterface
 ) {
 
-    fun getGif(category: String, page: String, itemCounter: Int, callback: GetGifCallback) {
+    fun getGifFromNet(category: String, page: String, itemCounter: Int, netCallback: GetGifNetCallback) {
+        netCallback.isLoading(true)
+      //  Log.d("TAGGGG", "$category, $page, $itemCounter")
         if (category == CATEGORY_RANDOM) {
-            getRandomPost(callback)
-        } else getSpecialPost(category, page, itemCounter, callback)
+            getRandomPostFromNet(netCallback)
+        } else getSpecialPostFromNet(category, page, itemCounter, netCallback)
     }
 
-    /**
-     * Или всё же execute
-     */
-    private fun getRandomPost(callback: GetGifCallback){
+    private fun getRandomPostFromNet(netCallback: GetGifNetCallback){
         apiService.getRandomPost().enqueue(object : Callback<GifItemResponse>{
             override fun onFailure(call: Call<GifItemResponse>, t: Throwable) {
-                callback.onError(t.message.toString())
+                netCallback.onError(t.message.toString())
             }
 
             override fun onResponse(
                 call: Call<GifItemResponse>,
                 response: Response<GifItemResponse>
             ) {
-                if (response.isSuccessful){
+                if (response.isSuccessful && response.body()?.gifURL != null ){
                     val dbGif = DbGifItem(description = response.body()!!.description, url = response.body()!!.gifURL)
                     Executors.newSingleThreadExecutor().execute {
                         repository.addGifToDb(dbGif)
                     }
-                    callback.onSuccess(dbGif)
+                    netCallback.onSuccess(dbGif)
                 } else {
-                    callback.onError(response.code().toString())
+                    netCallback.onError(response.code().toString())
                 }
             }
         })
     }
 
-    /**
-     * Или всё же execute
-     */
-    private fun getSpecialPost(category: String, page: String, itemCounter: Int, callback: GetGifCallback) {
-        apiService.getSpecialPosts(category, page).enqueue(object : Callback<List<GifItemResponse>>{
-            override fun onFailure(call: Call<List<GifItemResponse>>, t: Throwable) {
-                callback.onError(t.message.toString())
+    private fun getSpecialPostFromNet(category: String, page: String, itemCounter: Int, netCallback: GetGifNetCallback) {
+        apiService.getSpecialPosts(category, page).enqueue(object : Callback<ApiResponse>{
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                netCallback.onError(t.message.toString())
             }
 
             override fun onResponse(
-                call: Call<List<GifItemResponse>>,
-                response: Response<List<GifItemResponse>>
+                call: Call<ApiResponse>,
+                response: Response<ApiResponse>
             ) {
-                if (response.isSuccessful) {
-                    val gif = response.body()?.get(itemCounter)
+                if (response.isSuccessful  && response.body() != null ) {
+                    val gif = response.body()?.items?.get(itemCounter)
                     val dbGif = DbGifItem(description = gif!!.description, url = gif.gifURL)
-                    repository.addGifToDb(dbGif)
-                    callback.onSuccess(dbGif)
+                    Executors.newSingleThreadExecutor().execute {
+                        repository.addGifToDb(dbGif)
+                    }
+                    netCallback.onSuccess(dbGif)
                 } else {
-                    callback.onError(response.code().toString())
+                    netCallback.onError(response.code().toString())
                 }
             }
 
         })
     }
 
-    interface GetGifCallback {
+    fun getGifFromDb(dbCounter: Int, dbCallback: GetGifDbCallback){
+        dbCallback.isLoading(true)
+        Executors.newSingleThreadExecutor().execute {
+            val gifList = repository.getAllGifs()
+            if (gifList.size == dbCounter) dbCallback.isLast(true)
+            else {
+                Log.d("TAGGG", "${gifList[gifList.size - 1 - dbCounter]}")
+                dbCallback.onSuccess(gifList[gifList.size - 1 - dbCounter])
+            }
+        }
+    }
+
+    interface GetGifNetCallback {
+        fun isLoading(load: Boolean)
         fun onSuccess(gif: DbGifItem?)
         fun onError(error: String)
+    }
+
+    interface GetGifDbCallback{
+        fun isLoading(load: Boolean)
+        fun onSuccess(gif: DbGifItem?)
+        fun isLast(isLast: Boolean)
     }
 }

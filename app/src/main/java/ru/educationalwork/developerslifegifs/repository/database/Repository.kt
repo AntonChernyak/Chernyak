@@ -9,7 +9,7 @@ class Repository(private val dao: GifDao) : GifRepositoryInterface {
         dao.addGif(gif)
     }
 
-    override fun getAllGifs(): LiveData<List<DbGifItem>>? {
+    override fun getAllGifs(): List<DbGifItem> {
         return dao.getAllGifs()
     }
 

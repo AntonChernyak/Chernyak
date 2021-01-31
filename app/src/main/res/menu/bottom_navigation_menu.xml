@@ -3,18 +3,22 @@
 
     <item
         android:id="@+id/action_random"
-        android:title="@string/random" />
+        android:title="@string/random"
+        android:orderInCategory="100"/>
 
     <item
         android:id="@+id/action_latest"
-        android:title="@string/latest" />
+        android:title="@string/latest"
+        android:orderInCategory="200"/>
 
     <item
         android:id="@+id/action_hot"
-        android:title="@string/hot" />
+        android:title="@string/hot"
+        android:orderInCategory="300"/>
 
     <item
         android:id="@+id/action_top"
-        android:title="@string/top" />
+        android:title="@string/top"
+        android:orderInCategory="400"/>
 
 </menu>

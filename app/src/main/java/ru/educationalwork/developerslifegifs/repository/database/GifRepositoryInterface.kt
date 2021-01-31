@@ -7,5 +7,5 @@ interface GifRepositoryInterface {
 
     fun addGifToDb(gif: DbGifItem)
 
-    fun getAllGifs() : LiveData<List<DbGifItem>>?
+    fun getAllGifs() : List<DbGifItem>
 }

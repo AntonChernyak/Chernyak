@@ -13,6 +13,6 @@ interface GifDao {
     fun addGif(gifItem : DbGifItem)
 
     @Query("SELECT * FROM gifs_table ORDER BY id")
-    fun getAllGifs(): LiveData<List<DbGifItem>>
+    fun getAllGifs(): List<DbGifItem>
 
 }

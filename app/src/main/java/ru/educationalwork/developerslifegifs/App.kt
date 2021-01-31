@@ -6,7 +6,7 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import ru.educationalwork.developerslifegifs.domain.GifInteractor
-import ru.educationalwork.developerslifegifs.repository.server.ApiService
+import ru.educationalwork.developerslifegifs.repository.service.ApiService
 import ru.educationalwork.developerslifegifs.repository.database.Db
 import ru.educationalwork.developerslifegifs.repository.database.GifRepositoryInterface
 import ru.educationalwork.developerslifegifs.repository.database.Repository
