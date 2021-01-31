@@ -8,4 +8,6 @@
     <string name="next_button">Кнопка вперёд</string>
     <string name="previous_button">Кнопка назад</string>
     <string name="error">\"Ошибка: \"</string>
+    <string name="random">Случайная</string>
+    <string name="f">Проверьте подключение к сети</string>
 </resources>

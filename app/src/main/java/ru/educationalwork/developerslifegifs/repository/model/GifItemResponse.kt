@@ -1,13 +1,13 @@
-package ru.educationalwork.developerslifegifs.model.random_model
+package ru.educationalwork.developerslifegifs.repository.model
 
 import com.google.gson.annotations.SerializedName
 
-data class GifItemRandomResponse (
-	@SerializedName("id") val id : Int,
-	@SerializedName("gifURL") val gifURL : String
-/*
-
+data class GifItemResponse (
 	@SerializedName("description") val description : String,
+	@SerializedName("gifURL") val gifURL : String
+
+/*
+	@SerializedName("id") val id : Int,
 	@SerializedName("votes") val votes : Int,
 	@SerializedName("author") val author : String,
 	@SerializedName("date") val date : String,

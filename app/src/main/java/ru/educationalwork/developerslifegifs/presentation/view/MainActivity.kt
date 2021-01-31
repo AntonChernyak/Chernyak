@@ -1,11 +1,12 @@
-package ru.educationalwork.developerslifegifs.ui
+package ru.educationalwork.developerslifegifs.presentation.view
 
-import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
@@ -14,79 +15,90 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.android.synthetic.main.activity_main.*
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import ru.educationalwork.developerslifegifs.App
 import ru.educationalwork.developerslifegifs.R
-import ru.educationalwork.developerslifegifs.database.Db
-import ru.educationalwork.developerslifegifs.model.DbGifItemModel
-import ru.educationalwork.developerslifegifs.model.random_model.GifItemRandomResponse
-import java.util.concurrent.Executors
+import ru.educationalwork.developerslifegifs.presentation.viewmodel.GifViewModel
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        const val ACTION_LATEST = "latest"
-        const val ACTION_HOT = "hot"
-        const val ACTION_TOP = "top"
+        const val CATEGORY_LATEST = "latest"
+        const val CATEGORY_HOT = "hot"
+        const val CATEGORY_TOP = "top"
+        const val CATEGORY_RANDOM = "random"
+
         const val SHARED_PREFERENCES_NAME = "gif-pref"
         const val COUNTER_KEY = "counter key"
 
-        var counter : Int = 0
+        var dbCounter: Int = 0
         var action: String = ""
-        var page = 0
+        var page: Int = 0
+        var itemCounter: Int = 0
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        counter = getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE).getInt(COUNTER_KEY, 0)
-        if (counter == 0) loadRandomPostFromNet()
-        else loadPostFromDb()
-    }
+        val viewModel: GifViewModel = ViewModelProvider(this).get(GifViewModel::class.java)
 
-    override fun onPause() {
-        super.onPause()
+        viewModel.getGif(CATEGORY_RANDOM, "0", 0)
+
+        viewModel.gif.observe(this, Observer {gif ->
+            setGifIntoView(gif.url)
+        })
+
+/*
+        dbCounter = getSharedPreferences(
+            SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE).getInt(
+            COUNTER_KEY, 0)
+        if (dbCounter == 0) loadRandomPostFromNet()
+        else loadPostFromDb()
+*/
+
+    }
+/*
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
         getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE).edit().putInt(
-            COUNTER_KEY, counter).apply()
+            COUNTER_KEY,
+            dbCounter
+        ).apply()
     }
 
     fun onClickPreviousButton(view: View) {
-        counter++
+        dbCounter++
         loadPostFromDb()
     }
 
     fun onClickNextButton(view: View) {
         imageButtonPrevious.isEnabled = true
 
-        if (counter == 0) loadRandomPostFromNet()
+        if (dbCounter == 0) loadRandomPostFromNet()
         else {
-            counter--
+            dbCounter--
             loadPostFromDb()
         }
 
-    }
+    }*/
 
-    private fun loadRandomPostFromNet() {
+  /*  private fun loadRandomPostFromNet() {
         val randomGifCall = App.instance?.apiService?.getRandomPost()
 
         progressBar.visibility = View.VISIBLE
-        randomGifCall?.enqueue(object : Callback<GifItemRandomResponse> {
-            override fun onFailure(call: Call<GifItemRandomResponse>, t: Throwable) {
+        randomGifCall?.enqueue(object : Callback<GifItemResponse> {
+            override fun onFailure(call: Call<GifItemResponse>, t: Throwable) {
                 Toast.makeText(this@MainActivity, getString(R.string.network_error), Toast.LENGTH_LONG).show()
                 progressBar.visibility = View.GONE
             }
 
-            override fun onResponse(call: Call<GifItemRandomResponse>, response: Response<GifItemRandomResponse>) {
+            override fun onResponse(call: Call<GifItemResponse>, response: Response<GifItemResponse>) {
                 if (response.isSuccessful) {
                     setGifIntoView(response.body()?.gifURL)
 
                     Executors.newSingleThreadExecutor().execute {
                         //val gifDbItem = DbGifModel(response.body()!!.id, response.body()!!.gifURL)
-                        val gifDbItem = DbGifItemModel(url =  response.body()!!.gifURL)
-                        Db.getInstance(this@MainActivity)?.getGifDao()?.addRandomGif(gifDbItem)
+                        val gifDbItem = DbGifItem(url =  response.body()!!.gifURL)
+                        Db.getInstance(this@MainActivity)?.getGifDao()?.addGif(gifDbItem)
                     }
                 } else {
                     Toast.makeText(this@MainActivity, getString(R.string.error) + response.code(), Toast.LENGTH_LONG).show()
@@ -99,27 +111,38 @@ class MainActivity : AppCompatActivity() {
     private fun loadSpecialPostFromNet(){
         val specialGifCall = App.instance?.apiService?.getSpecialPosts(action, page.toString())
 
+        progressBar.visibility = View.VISIBLE
+        specialGifCall?.enqueue(object: Callback<List<GifItem>>{
+            override fun onFailure(call: Call<List<GifItem>>, t: Throwable) {
+
+            }
+
+            override fun onResponse(call: Call<List<GifItem>>, response: Response<List<GifItem>>) {
+                val gif = response.body()?.get(itemCounter)
+                setGifIntoView(gif.)
+            }
+        })
 
     }
 
     private fun loadPostFromDb() {
        val gifList = Db.getInstance(this)?.getGifDao()?.getAllGifs()
-        if (gifList?.size == counter) {
+        if (gifList?.size == dbCounter) {
             imageButtonPrevious.isEnabled = false
-            counter--
-            Log.d("TAGGG", counter.toString())
+            dbCounter--
+            Log.d("TAGGG", dbCounter.toString())
             imageButtonPrevious.animate()
                 .rotation(180f)
                 .scaleX(0.5f)
                 .scaleY(0.5f)
-                .setDuration(2000)
+                .setDuration(1000)
                 .start()
         } else {
-            val gif = gifList?.get(gifList.size - 1 - counter)
+            val gif = gifList?.get(gifList.size - 1 - dbCounter)
             setGifIntoView(gif?.url)
         }
     }
-
+*/
     fun setGifIntoView(url: String?) {
         Glide.with(imageViewGif.context)
             .asGif()
@@ -144,9 +167,14 @@ class MainActivity : AppCompatActivity() {
         val navListener: BottomNavigationView.OnNavigationItemSelectedListener =
             BottomNavigationView.OnNavigationItemSelectedListener { item ->
                 when (item.itemId) {
-                    R.id.action_latest -> action = ACTION_LATEST
-                    R.id.action_hot -> action = ACTION_HOT
-                    R.id.action_top -> action = ACTION_TOP
+                    R.id.action_latest -> action =
+                        CATEGORY_LATEST
+                    R.id.action_hot -> action =
+                        CATEGORY_HOT
+                    R.id.action_top -> action =
+                        CATEGORY_TOP
+                    R.id.action_random -> action =
+                        CATEGORY_RANDOM
                 }
                 true
             }
@@ -156,7 +184,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun resetData(){
-        counter = 0
+        dbCounter = 0
         // и очистить БД
     }
 }

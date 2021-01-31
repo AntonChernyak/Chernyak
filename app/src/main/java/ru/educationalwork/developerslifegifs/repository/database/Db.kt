@@ -1,9 +1,7 @@
-package ru.educationalwork.developerslifegifs.database
+package ru.educationalwork.developerslifegifs.repository.database
 
 import android.content.Context
-import android.util.Log
 import androidx.room.Room
-import ru.educationalwork.developerslifegifs.App
 import ru.educationalwork.developerslifegifs.App.Companion.DATABASE_NAME
 
 object Db {
@@ -19,7 +17,7 @@ object Db {
                     GifDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .allowMainThreadQueries()
+                    //.allowMainThreadQueries()
                     .fallbackToDestructiveMigration()
                     .build()
             }
